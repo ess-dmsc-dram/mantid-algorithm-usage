@@ -1,11 +1,30 @@
 #!/usr/bin/python3
 
+import argparse
 import re
 import parse_mantid_source
 import parse_raw_results
 import sys
 import config
 from update_cache import update_cache
+
+
+modes = [ "summary", "table", "unified", "default" ]
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('-o', '--ours', action='store_true', help='Include only algorithms defined in our codebase.')
+parser.add_argument('-t', '--include-tests', action='store_true', help='Include algorithms that are defined in test files.')
+parser.add_argument('-c', '--max_count', metavar='N', type=int, default=-1, help='Include only algorithms used at most %(metavar)s times.')
+#parser.add_argument('-m', '--mode', choices=modes, default='table', help='Specify output mode.')
+#parser.add_argument('-t', '--table', action='store_true',
+#                    help='Prints a table of results.')
+#parser.add_argument('-u', '--unified-counts', action='store_true',
+#                    help='Prints unified usage counts (sum of direct and internal calls).')
+#parser.add_argument('-c', '--controllee', type=str, default='BraggPeakEventGenerator', help='Specify controllee.')
+#parser.add_argument('-H', '--host', type=str, default='localhost', help='Host to connect to.')
+#parser.add_argument('-p', '--port', type=str, default='10002', help='Port to connect to.')
+
+args = parser.parse_args()
+
 
 # http://stackoverflow.com/a/14981125
 def eprint(*args, **kwargs):
@@ -141,15 +160,27 @@ maxage = 24*60*60
 update_cache(maxage)
 merged = merge()
 
+format_string = '{:9} {:5}% {:6} {:5} {:8} {:8} {:6} {:11} {:40} {} {}'
+print('# ' + format_string.format('usecount', 'child', 'type', 'lines', 'codebase', 'testinfo', 'istest', 'versioninfo', 'name', 'module', 'path'))
+
+lines = []
 for r in merged.values():
+    if args.ours and not r.ours:
+        continue
+    if (not args.include_tests) and (r.is_test):
+        continue
+    count = r.get_count()
+    if args.max_count >= 0 and args.max_count < count:
+        continue
     ours = 'ours' if r.ours else 'theirs'
     test = 'test' if r.is_test else '-'
     tested = '-' if r.has_test else 'untested'
-    print('{:9} {:3}% {:6} {:4} {:6} {:8} {:4} {:11} {:40} {}'.format(
-        r.get_count(),
+    line_count = int(r.line_count) if r.line_count is not '-' else '-'
+    lines.append('  ' + format_string.format(
+        count,
         int(100*r.get_internal_fraction()),
         r.type,
-        r.line_count,
+        line_count,
         ours,
         tested,
         test,
@@ -158,3 +189,6 @@ for r in merged.values():
         r.module,
         r.path
         ))
+
+for line in sorted(lines):
+    print(line)
