@@ -1,0 +1,1 @@
+mantid_source = '../mantid'
