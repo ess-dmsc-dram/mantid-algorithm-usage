@@ -9,19 +9,10 @@ import config
 from update_cache import update_cache
 
 
-modes = [ "summary", "table", "unified", "default" ]
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-o', '--ours', action='store_true', help='Include only algorithms defined in our codebase.')
 parser.add_argument('-t', '--include-tests', action='store_true', help='Include algorithms that are defined in test files.')
 parser.add_argument('-c', '--max_count', metavar='N', type=int, default=-1, help='Include only algorithms used at most %(metavar)s times.')
-#parser.add_argument('-m', '--mode', choices=modes, default='table', help='Specify output mode.')
-#parser.add_argument('-t', '--table', action='store_true',
-#                    help='Prints a table of results.')
-#parser.add_argument('-u', '--unified-counts', action='store_true',
-#                    help='Prints unified usage counts (sum of direct and internal calls).')
-#parser.add_argument('-c', '--controllee', type=str, default='BraggPeakEventGenerator', help='Specify controllee.')
-#parser.add_argument('-H', '--host', type=str, default='localhost', help='Host to connect to.')
-#parser.add_argument('-p', '--port', type=str, default='10002', help='Port to connect to.')
 
 args = parser.parse_args()
 
