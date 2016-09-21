@@ -9,10 +9,10 @@ def load_raw_results():
 
 class AlgResultRecord:
     def __init__(self, entries):
-        self.name = entries[0]
-        self.count = entries[1]
-        self.is_child = entries[2]
-        self.version = entries[3]
+        self.name = str(entries[0])
+        self.count = int(entries[1])
+        self.is_child = bool(entries[2])
+        self.version = str(entries[3])
 
 
 def get_algorithm_results():
@@ -23,5 +23,6 @@ def get_algorithm_results():
     return records
 
 
-for record in get_algorithm_results():
-    print('{} {} {} {}'.format(record.name, record.count, record.is_child, record.version))
+if __name__ == '__main__':
+    for record in get_algorithm_results():
+        print('{} {} {} {}'.format(record.name, record.count, record.is_child, record.version))

@@ -12,7 +12,7 @@ class AlgFileRecord:
         split = data.split(':')
         n = re.search(r"\((\w+)\)", split[1])
         self.path = split[0]
-        self.name = n.group(1)
+        name = n.group(1)
         if self.path.endswith('.cpp') or self.path.endswith('.h'):
             self.type = 'C++'
         elif self.path.endswith('.py'):
@@ -31,11 +31,20 @@ class AlgFileRecord:
             else:
                 module = re.findall(config.mantid_source + '/(.*?)/plugins/*', self.path)
         if not module:
-            module = re.findall(config.mantid_source + '/(.*?)/' + self.name + '*', self.path)
+            module = re.findall(config.mantid_source + '/(.*?)/' + name + '*', self.path)
         if module:
             self.module = module[0]
         else:
             self.module = None
+        self.name = self._get_name_with_version(name)
+
+    def _get_name_with_version(self, name):
+        try:
+            version = int(name[-1])
+            name = name[:-1]
+        except ValueError:
+            version = 1
+        return name + '.v' + str(version)
 
 
 def get_declared_algorithms():
@@ -46,5 +55,6 @@ def get_declared_algorithms():
     return records
 
 
-for record in get_declared_algorithms():
-    print('{} {} {} {} {}'.format(record.name, record.path, record.type, record.is_test, record.module))
+if __name__ == '__main__':
+    for record in get_declared_algorithms():
+        print('{} {} {} {} {}'.format(record.name, record.path, record.type, record.is_test, record.module))
