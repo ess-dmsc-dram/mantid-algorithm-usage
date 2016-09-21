@@ -17,6 +17,12 @@ args = parser.parse_args()
 
 
 
+# grep -r '\(DECLARE_ALGORITHM\|DECLARE_NEXUS_FILELOADER_ALGORITHM\|DECLARE_FILELOADER_ALGORITHM\|AlgorithmFactory.subscribe\)'\([A-Z] > ~/mantid/algorithm_usage/declared-algorithms
+# cat declared-algorithms | grep -v '/test/' | cut -d\( -f2 | cut -d\) -f1 | sed s/$/1/g | sed s/21$/\.v2/ | sed s/31$/\.v3/ | sed s/1$/\.v1/ > all-algorithms
+# for i in $(cat all-algorithms); do echo -n "$i " && grep -c \ $i algorithm-usage; done | grep 0$ | cut -d' ' -f1 | sort > unused-algorithms
+
+
+
 #for i in $(seq 0 35); do wget http://reports.mantidproject.org/api/feature?page=$i; done
 
 #for i in range(1, 33):
