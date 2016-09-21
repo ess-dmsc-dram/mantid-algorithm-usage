@@ -16,7 +16,7 @@ class AlgRecord:
             self.name = data
             self.path = ''
             self.type = ''
-            self.is_test = '-'
+            self.is_test = False
             self.module = ''
         else:
             raise RuntimeError('Bad init type ' + str(type(data)))
@@ -83,4 +83,5 @@ merged = merge()
 
 for r in merged.values():
     ours = 'ours' if r.ours else 'theirs'
-    print('{:9} {:3}% {:6} {:6} {:9} {:11} {:40} {}'.format(r.get_count(), int(100*r.get_internal_fraction()), r.type, ours, r.is_test, r.superseeded, r.name, r.module))
+    test = 'test' if r.is_test else '-'
+    print('{:9} {:3}% {:6} {:6} {:4} {:11} {:40} {}'.format(r.get_count(), int(100*r.get_internal_fraction()), r.type, ours, test, r.superseeded, r.name, r.module, r.path))

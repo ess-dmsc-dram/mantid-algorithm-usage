@@ -19,7 +19,7 @@ class AlgFileRecord:
             self.type = 'Python'
         else:
             self.type = 'unknown'
-        self.is_test = 'test' if '/test/' in self.path else 'not-test'
+        self.is_test = '/test/' in self.path
         if self.type == 'C++':
             if self.is_test:
                 module = re.findall(config.mantid_source + '/(.*?)/test/*', self.path)
