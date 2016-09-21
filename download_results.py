@@ -1,10 +1,8 @@
-import urllib2
+from urllib.request import urlopen
 import json
-import config
 
 # Thanks to original author Matthew D. Jones
 class AlgRecord:
-
     def __init__(self, name, count, is_child, version):
         self.name = name
         self.count = count
@@ -16,7 +14,7 @@ class AlgRecord:
 
 
 def json_parser(data_string):
-    data = json.loads(data_string)
+    data = json.loads(str(data_string))
     alg_records = []
     for record in data['results']:
         if record['type'] == 'Algorithm':
@@ -29,18 +27,12 @@ def get_data():
     page_number = 1
     more = True
     while more:
-        print "Collecting data from page " + str(page_number)
-        resp = urllib2.urlopen("http://reports.mantidproject.org/api/feature?page="+str(page_number)+"&format=json")
-        alg_records, more = json_parser(resp.read())
+        print("Collecting data from page " + str(page_number))
+        resp = urlopen("http://reports.mantidproject.org/api/feature?page="+str(page_number)+"&format=json")
+        alg_records, more = json_parser(resp.read().decode('utf-8'))
     
         for record in alg_records:
             table_data.append(record.get_data_list())
         page_number += 1
 
     return table_data
-
-
-data = get_data()
-
-with open(config.cache_dir + '/raw-results', 'w') as file_:
-    file_.write(json.dumps(data))

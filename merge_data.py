@@ -3,6 +3,7 @@ import parse_mantid_source
 import parse_raw_results
 import sys
 import config
+from update_cache import update_cache
 
 # http://stackoverflow.com/a/14981125
 def eprint(*args, **kwargs):
@@ -134,6 +135,8 @@ def merge():
     return merged
 
 
+maxage = 24*60*60
+update_cache(maxage)
 merged = merge()
 
 for r in merged.values():
