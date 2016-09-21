@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import re
 import parse_mantid_source
 import parse_raw_results
