@@ -1,10 +1,19 @@
+import re
 import parse_mantid_source
 import parse_raw_results
+import sys
+import config
+
+# http://stackoverflow.com/a/14981125
+def eprint(*args, **kwargs):
+    if config.verbose:
+        print(*args, file=sys.stderr, **kwargs)
 
 
 class AlgRecord:
     def __init__(self, data):
         self.ours = False
+        self.has_test = False
         if isinstance(data, parse_mantid_source.AlgFileRecord):
             self.name = data.name
             self.path = data.path
@@ -14,10 +23,10 @@ class AlgRecord:
             self.ours = True
         elif isinstance(data, str):
             self.name = data
-            self.path = ''
-            self.type = ''
+            self.path = '-'
+            self.type = '-'
             self.is_test = False
-            self.module = ''
+            self.module = '-'
         else:
             raise RuntimeError('Bad init type ' + str(type(data)))
         self.count_direct = [0,0,0]
@@ -48,6 +57,48 @@ class AlgRecord:
         return 1.0 if count < 1 else float(sum(self.count_internal))/count
 
 
+def get_line_count(record):
+    source = record.path
+    count = 0
+    try:
+        # Source lines
+        with open(source, 'r') as myfile:
+            count = count + len(myfile.read().split('\n'))
+        basename = source.split('/')[-1].split('.')[0]
+        # Header lines (if applicable)
+        if (record.type == 'C++') and not record.is_test:
+            module = record.module.split('/')[-1]
+            header = re.sub('/src/' + basename + '.cpp', '/inc/Mantid' + module + '/' + basename + '.h', source)
+            try:
+                with open(header, 'r') as myfile:
+                    count = count + len(myfile.read().split('\n'))
+            except:
+                eprint('Failed to open header ' + header)
+                pass
+        # Test lines (if applicable)
+        if not record.is_test:
+            if record.type == 'C++':
+                testsource = re.sub('/src/' + basename + '.cpp', '/test/' + basename + 'Test.h', source)
+                try:
+                    with open(testsource, 'r') as myfile:
+                        count = count + len(myfile.read().split('\n'))
+                    record.has_test = True
+                except:
+                    eprint('Failed to open test source ' + testsource)
+                    pass
+            elif record.type == 'Python':
+                testsource = source.replace('/plugins/algorithms/', '/test/python/plugins/algorithms/').replace('.py', 'Test.py').replace('/WorkflowAlgorithms', '')
+                try:
+                    with open(testsource, 'r') as myfile:
+                        count = count + len(myfile.read().split('\n'))
+                    record.has_test = True
+                except:
+                    eprint('Failed to open test source ' + testsource)
+                    pass
+        return str(count)
+    except IOError:
+        return '-'
+
 
 def merge():
     algs = parse_mantid_source.get_declared_algorithms()
@@ -69,6 +120,10 @@ def merge():
         superseeded = 'superseeded' if item.name[:-1] + str(alg_version+1) in merged else '          -'
         item.superseeded = superseeded
 
+    # Add line counts
+    for item in merged.values():
+        item.line_count = get_line_count(item)
+
     # Special cases
     # Q1D2:
     tmp = merged['Q1D.v2']
@@ -84,4 +139,17 @@ merged = merge()
 for r in merged.values():
     ours = 'ours' if r.ours else 'theirs'
     test = 'test' if r.is_test else '-'
-    print('{:9} {:3}% {:6} {:6} {:4} {:11} {:40} {}'.format(r.get_count(), int(100*r.get_internal_fraction()), r.type, ours, test, r.superseeded, r.name, r.module, r.path))
+    tested = '-' if r.has_test else 'untested'
+    print('{:9} {:3}% {:6} {:4} {:6} {:8} {:4} {:11} {:40} {}'.format(
+        r.get_count(),
+        int(100*r.get_internal_fraction()),
+        r.type,
+        r.line_count,
+        ours,
+        tested,
+        test,
+        r.superseeded,
+        r.name,
+        r.module,
+        r.path
+        ))
