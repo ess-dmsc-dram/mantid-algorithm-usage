@@ -7,6 +7,9 @@ The main script is `merge_data.py`. Usage is:
 ./merge_data.py # python3 merged_data.py
 # Getting help
 ./merge_data.py -h
-# Use less -S to avoid wrapping long lines, which creates unreadable output
-./merge_data.py -o -c 20 | less -S
+# Generate summary, listing algorithms up to use count 5, include only ours
+./merge_data.py -s -c 5 -o
+# Wide output including module names and filenames. Use less -S to
+# avoid wrapping long lines, which creates unreadable output
+./merge_data.py -o -c 20 -w | less -S
 ```
