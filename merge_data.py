@@ -113,6 +113,16 @@ def get_line_count(record):
         return '-'
 
 
+def is_deprecated(record, deprecated_headers):
+    source = record.path
+    if (record.type == 'C++') and not record.is_test:
+        basename = source.split('/')[-1].split('.')[0]
+        module = record.module.split('/')[-1]
+        header = re.sub('/src/' + basename + '.cpp', '/inc/Mantid' + module + '/' + basename + '.h', source)
+        return header in deprecated_headers
+    return False
+
+
 def merge():
     algs = parse_mantid_source.get_declared_algorithms()
     results = parse_raw_results.get_algorithm_results()
@@ -137,6 +147,12 @@ def merge():
     for item in merged.values():
         item.line_count = get_line_count(item)
 
+    # Add deprecation info
+    with open(config.cache_dir + '/deprecated-algorithms', 'r') as myfile:
+        deprecated_headers = myfile.read().split('\n')
+        for item in merged.values():
+            item.is_deprecated = is_deprecated(item, deprecated_headers)
+
     # Special cases
     # Q1D2:
     tmp = merged['Q1D.v2']
@@ -151,8 +167,8 @@ maxage = 24*60*60
 update_cache(maxage)
 merged = merge()
 
-format_string = '{:9} {:5}% {:6} {:5} {:8} {:8} {:6} {:11} {:40} {} {}'
-print('# ' + format_string.format('usecount', 'child', 'type', 'lines', 'codebase', 'testinfo', 'istest', 'versioninfo', 'name', 'module', 'path'))
+format_string = '{:9} {:5}% {:6} {:5} {:8} {:8} {:6} {:11} {:10} {:40} {} {}'
+print('# ' + format_string.format('usecount', 'child', 'type', 'lines', 'codebase', 'testinfo', 'istest', 'versioninfo', 'deprecated', 'name', 'module', 'path'))
 
 lines = []
 for r in merged.values():
@@ -164,9 +180,10 @@ for r in merged.values():
     if args.max_count >= 0 and args.max_count < count:
         continue
     ours = 'ours' if r.ours else 'theirs'
-    test = 'test' if r.is_test else '-'
-    tested = '-' if r.has_test else 'untested'
-    line_count = int(r.line_count) if r.line_count is not '-' else '-'
+    test = 'test' if r.is_test else '   -'
+    tested = '       -' if r.has_test else 'untested'
+    line_count = int(r.line_count) if r.line_count is not '-' else '    -'
+    deprecated = 'deprecated' if r.is_deprecated else '         -'
     lines.append('  ' + format_string.format(
         count,
         int(100*r.get_internal_fraction()),
@@ -176,6 +193,7 @@ for r in merged.values():
         tested,
         test,
         r.superseeded,
+        deprecated,
         r.name,
         r.module,
         r.path

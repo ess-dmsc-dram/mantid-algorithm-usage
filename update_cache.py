@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import subprocess
 import config
 import time
@@ -26,3 +28,7 @@ def update_algorithm_cache(maxage):
 def update_cache(maxage):
     update_result_cache(maxage)
     update_algorithm_cache(maxage)
+
+
+if __name__ == '__main__':
+    update_cache(0)
