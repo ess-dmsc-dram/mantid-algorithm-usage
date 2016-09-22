@@ -14,6 +14,7 @@ parser.add_argument('-o', '--ours', action='store_true', help='Include only algo
 parser.add_argument('-t', '--include-tests', action='store_true', help='Include algorithms that are defined in test files.')
 parser.add_argument('-c', '--max_count', metavar='N', type=int, default=-1, help='Include only algorithms used at most %(metavar)s times.')
 parser.add_argument('-w', '--wide-output', action='store_true', help='Wide output, including module and path information.')
+parser.add_argument('-b', '--include-blacklisted', action='store_true', help='Include algorithms from blacklist.')
 
 args = parser.parse_args()
 
@@ -164,6 +165,11 @@ def merge():
     return merged
 
 
+def load_blacklist():
+    with open('blacklist', 'r') as myfile:
+        return myfile.read().strip().split('\n')
+
+
 maxage = 24*60*60
 update_cache(maxage)
 merged = merge()
@@ -174,6 +180,8 @@ if args.wide_output:
 
 print('# ' + format_string.format('usecount', 'child', 'type', 'lines', 'codebase', 'testinfo', 'istest', 'versioninfo', 'deprecated', 'name', 'module', 'path'))
 
+blacklist = load_blacklist()
+
 lines = []
 for r in merged.values():
     if args.ours and not r.ours:
@@ -182,6 +190,8 @@ for r in merged.values():
         continue
     count = r.get_count()
     if args.max_count >= 0 and args.max_count < count:
+        continue
+    if (not args.include_blacklisted) and (r.name in blacklist):
         continue
     ours = 'ours' if r.ours else 'theirs'
     test = 'test' if r.is_test else '   -'
