@@ -1,4 +1,6 @@
-Small tool for parsing and analysing algorithm usage statistics of Mantid.
+# Mantid Algorithm Usage
+
+This is a small tool for parsing and analysing algorithm usage statistics of Mantid.
 
 The main script is `merge_data.py`.
 It requires access to a Mantid source tree.
@@ -17,3 +19,8 @@ Usage is:
 # avoid wrapping long lines, which creates unreadable output
 ./merge_data.py -o -c 20 -w | less -S
 ```
+
+Results pulled from the usage statistics web server and some of the parsed information on the Mantid source tree is cached for improved performance.
+The cache is updated if data is older than 24 hours.
+`update_cache.py` can be used for forcing an update.
+Alternatively you can simply remove everything in `./cache/`.
