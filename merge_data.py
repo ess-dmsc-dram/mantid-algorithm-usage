@@ -12,7 +12,7 @@ from update_cache import update_cache
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-o', '--ours', action='store_true', help='Include only algorithms defined in our codebase.')
 parser.add_argument('-t', '--include-tests', action='store_true', help='Include algorithms that are defined in test files.')
-parser.add_argument('-c', '--max_count', metavar='N', type=int, default=-1, help='Include only algorithms used at most %(metavar)s times.')
+parser.add_argument('-c', '--max-count', metavar='N', type=int, default=-1, help='Include only algorithms used at most %(metavar)s times.')
 parser.add_argument('-w', '--wide-output', action='store_true', help='Wide output, including module and path information.')
 parser.add_argument('-b', '--include-blacklisted', action='store_true', help='Include algorithms from blacklist.')
 parser.add_argument('-s', '--summary', action='store_true', help='Output summary instead of table.')
