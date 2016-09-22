@@ -54,7 +54,7 @@ class AlgRecord:
         if version == '3.6':
             return 1
         if version == '3.7':
-            return 1
+            return 2
         raise RuntimeError('Unknown version ' + version)
 
     def add_result_data(self, result):
