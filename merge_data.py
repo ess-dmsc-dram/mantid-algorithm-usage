@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument('-o', '--ours', action='store_true', help='Include only algorithms defined in our codebase.')
 parser.add_argument('-t', '--include-tests', action='store_true', help='Include algorithms that are defined in test files.')
 parser.add_argument('-c', '--max_count', metavar='N', type=int, default=-1, help='Include only algorithms used at most %(metavar)s times.')
+parser.add_argument('-w', '--wide-output', action='store_true', help='Wide output, including module and path information.')
 
 args = parser.parse_args()
 
@@ -167,7 +168,10 @@ maxage = 24*60*60
 update_cache(maxage)
 merged = merge()
 
-format_string = '{:9} {:5}% {:6} {:5} {:8} {:8} {:6} {:11} {:10} {:40} {} {}'
+format_string = '{:9} {:5}% {:6} {:5} {:8} {:8} {:6} {:11} {:10} {:40}'
+if args.wide_output:
+    format_string = format_string + ' {} {}'
+
 print('# ' + format_string.format('usecount', 'child', 'type', 'lines', 'codebase', 'testinfo', 'istest', 'versioninfo', 'deprecated', 'name', 'module', 'path'))
 
 lines = []
