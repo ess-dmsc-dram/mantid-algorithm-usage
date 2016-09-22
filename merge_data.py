@@ -15,6 +15,7 @@ parser.add_argument('-t', '--include-tests', action='store_true', help='Include 
 parser.add_argument('-c', '--max_count', metavar='N', type=int, default=-1, help='Include only algorithms used at most %(metavar)s times.')
 parser.add_argument('-w', '--wide-output', action='store_true', help='Wide output, including module and path information.')
 parser.add_argument('-b', '--include-blacklisted', action='store_true', help='Include algorithms from blacklist.')
+parser.add_argument('-s', '--summary', action='store_true', help='Output summary instead of table.')
 
 args = parser.parse_args()
 
@@ -171,48 +172,172 @@ def load_blacklist():
         return myfile.read().strip().split('\n')
 
 
-maxage = 24*60*60
-update_cache(maxage)
-merged = merge()
+def get_format_string():
+    format_string = '{:9} {:5}% {:6} {:5} {:8} {:8} {:6} {:11} {:10} {:40}'
+    if args.wide_output:
+        format_string = format_string + ' {} {}'
+    return format_string
 
-format_string = '{:9} {:5}% {:6} {:5} {:8} {:8} {:6} {:11} {:10} {:40}'
-if args.wide_output:
-    format_string = format_string + ' {} {}'
 
-print('# ' + format_string.format('usecount', 'child', 'type', 'lines', 'codebase', 'testinfo', 'istest', 'versioninfo', 'deprecated', 'name', 'module', 'path'))
+def print_header_line(format_string):
+    print('# ' + format_string.format('usecount', 'child', 'type', 'lines', 'codebase', 'testinfo', 'istest', 'versioninfo', 'deprecated', 'name', 'module', 'path'))
 
-blacklist = load_blacklist()
-
-lines = []
-for r in merged.values():
-    if args.ours and not r.ours:
-        continue
-    if (not args.include_tests) and (r.is_test):
-        continue
-    count = r.get_count()
-    if args.max_count >= 0 and args.max_count < count:
-        continue
-    if (not args.include_blacklisted) and (r.name in blacklist):
-        continue
-    ours = 'ours' if r.ours else 'theirs'
-    test = 'test' if r.is_test else '   -'
-    tested = '       -' if r.has_test else 'untested'
-    line_count = int(r.line_count) if r.line_count is not '-' else '    -'
-    deprecated = 'deprecated' if r.is_deprecated else '         -'
-    lines.append('  ' + format_string.format(
+def format_algorithm_line(format_string, record):
+    count = record.get_count()
+    ours = 'ours' if record.ours else 'theirs'
+    test = 'test' if record.is_test else '   -'
+    tested = '       -' if record.has_test else 'untested'
+    line_count = int(record.line_count) if record.line_count is not '-' else '    -'
+    deprecated = 'deprecated' if record.is_deprecated else '         -'
+    return '  ' + format_string.format(
         count,
-        int(100*r.get_internal_fraction()),
-        r.type,
+        int(100*record.get_internal_fraction()),
+        record.type,
         line_count,
         ours,
         tested,
         test,
-        r.superseeded,
+        record.superseeded,
         deprecated,
-        r.name,
-        r.module,
-        r.path
-        ))
+        record.name,
+        record.module,
+        record.path
+        )
 
-for line in sorted(lines):
-    print(line)
+
+def print_table(merged, blacklist):
+    format_string = get_format_string()
+    print_header_line(format_string)
+
+    lines = []
+    for r in merged.values():
+        if args.ours and not r.ours:
+            continue
+        if (not args.include_tests) and (r.is_test):
+            continue
+        count = r.get_count()
+        if args.max_count >= 0 and args.max_count < count:
+            continue
+        if (not args.include_blacklisted) and (r.name in blacklist):
+            continue
+
+        lines.append(format_algorithm_line(format_string, r))
+
+    for line in sorted(lines):
+        print(line)
+
+
+class Summary():
+    def __init__(self):
+        self.total = 0
+        self.unused = 0
+        self.up_to_threshold = 0
+        self.deprecated = 0
+        self.superseeded = 0
+
+
+def print_summary(merged, blacklist):
+    line_count = 0
+    line_count_unused = 0
+    line_count_up_to_threshold = 0
+    deprecated = []
+    superseeded = []
+    format_string = get_format_string()
+    unused = []
+    below_max = []
+    summary = Summary()
+    for r in merged.values():
+        if args.ours and not r.ours:
+            continue
+        if (not args.include_tests) and (r.is_test):
+            continue
+        if (not args.include_blacklisted) and (r.name in blacklist):
+            continue
+
+        count = r.get_count()
+        try:
+            this_count = int(r.line_count)
+            line_count = line_count + this_count
+            if count == 0:
+                line_count_unused = line_count_unused + this_count
+            if count <= args.max_count:
+                line_count_up_to_threshold = line_count_up_to_threshold + this_count
+        except ValueError:
+            pass
+
+        summary.total = summary.total + 1
+
+        if r.is_deprecated:
+            deprecated.append(format_algorithm_line(format_string, r))
+            summary.deprecated = summary.deprecated + 1
+
+        if r.superseeded is 'superseeded':
+            superseeded.append(format_algorithm_line(format_string, r))
+            summary.superseeded = summary.superseeded + 1
+
+        if count == 0:
+            unused.append(format_algorithm_line(format_string, r))
+            summary.unused = summary.unused + 1
+            summary.up_to_threshold = summary.up_to_threshold + 1
+
+        if 0 < count <= args.max_count:
+            below_max.append(format_algorithm_line(format_string, r))
+            summary.up_to_threshold = summary.up_to_threshold + 1
+
+    print('=== Unused Algorithms ===')
+    print_header_line(format_string)
+    for line in sorted(unused):
+        print(line)
+    print('')
+
+    print('=== Algorithms below threshold ===')
+    print_header_line(format_string)
+    for line in sorted(below_max):
+        print(line)
+    print('')
+
+    print('=== Deprecated Algorithms ===')
+    print_header_line(format_string)
+    for line in sorted(deprecated):
+        print(line)
+    print('')
+
+    print('=== Superseeded Algorithms (newer version available) ===')
+    print_header_line(format_string)
+    for line in sorted(superseeded):
+        print(line)
+    print('')
+
+    print('=== Lines of code (algorithm source files, headers, and test sources) ===')
+    print('{:7} lines for all algorithms'.format(line_count))
+    if args.max_count > 0:
+        print('{:7} lines for algorithms up to threashold use count {}'.format(line_count_up_to_threshold, args.max_count))
+    print('{:7} lines for unused algorithms'.format(line_count_unused))
+    print('')
+
+    print('=== Summary ===')
+    print('{:5} algorithms'.format(summary.total))
+    if args.max_count > 0:
+        print('{:5} algorithms up to threashold use count {}'.format(summary.up_to_threshold, args.max_count))
+    print('{:5} unused algorithms'.format(summary.unused))
+    print('{:5} deprecated algorithms'.format(summary.deprecated))
+    print('{:5} superseeded algorithms'.format(summary.superseeded))
+    print('')
+
+    if args.ours:
+        print('Output includes only results for algorithms in the Mantid codebase.')
+    else:
+        print('Output includes results for algorithms in the Mantid codebase AND from other sources.')
+
+
+
+maxage = 24*60*60
+update_cache(maxage)
+merged = merge()
+blacklist = load_blacklist()
+
+
+if args.summary:
+    print_summary(merged, blacklist)
+else:
+    print_table(merged, blacklist)
