@@ -30,6 +30,7 @@ class AlgRecord:
     def __init__(self, data):
         self.ours = False
         self.has_test = False
+        self.test_fraction = 0.0
         if isinstance(data, parse_mantid_source.AlgFileRecord):
             self.name = data.name
             self.path = data.path
@@ -83,7 +84,8 @@ def get_line_count(record):
     count = 0
     try:
         # Source lines
-        count = count + get_file_length(source)
+        source_lines = get_file_length(source)
+        count = count + source_lines
         basename = source.split('/')[-1].split('.')[0]
         # Header lines (if applicable)
         if (record.type == 'C++') and not record.is_test:
@@ -95,23 +97,20 @@ def get_line_count(record):
                 eprint('Failed to open header ' + header)
                 pass
         # Test lines (if applicable)
+        test_lines = 0
         if not record.is_test:
             if record.type == 'C++':
                 testsource = re.sub('/src/' + basename + '.cpp', '/test/' + basename + 'Test.h', source)
-                try:
-                    count = count + get_file_length(testsource)
-                    record.has_test = True
-                except:
-                    eprint('Failed to open test source ' + testsource)
-                    pass
             elif record.type == 'Python':
                 testsource = source.replace('/plugins/algorithms/', '/test/python/plugins/algorithms/').replace('.py', 'Test.py').replace('/WorkflowAlgorithms', '')
-                try:
-                    count = count + get_file_length(testsource)
-                    record.has_test = True
-                except:
-                    eprint('Failed to open test source ' + testsource)
-                    pass
+            try:
+                test_lines = get_file_length(testsource)
+                count = count + test_lines
+                record.has_test = True
+                record.test_fraction = float(test_lines)/source_lines
+            except:
+                eprint('Failed to open test source ' + testsource)
+                pass
         return str(count)
     except IOError:
         return '-'
@@ -173,14 +172,14 @@ def load_blacklist():
 
 
 def get_format_string():
-    format_string = '{:9} {:5}% {:6} {:5} {:8} {:8} {:6} {:11} {:10} {:40}'
+    format_string = '{:9} {:5}% {:6} {:5} {:7} {:8} {:8} {:6} {:11} {:10} {:40}'
     if args.wide_output:
         format_string = format_string + ' {} {}'
     return format_string
 
 
 def print_header_line(format_string):
-    print('# ' + format_string.format('usecount', 'child', 'type', 'lines', 'codebase', 'testinfo', 'istest', 'versioninfo', 'deprecated', 'name', 'module', 'path'))
+    print('# ' + format_string.format('usecount', 'child', 'type', 'lines', 'tst/src', 'codebase', 'testinfo', 'istest', 'versioninfo', 'deprecated', 'name', 'module', 'path'))
 
 def format_algorithm_line(format_string, record):
     count = record.get_count()
@@ -194,6 +193,7 @@ def format_algorithm_line(format_string, record):
         int(100*record.get_internal_fraction()),
         record.type,
         line_count,
+        round(record.test_fraction, 2),
         ours,
         tested,
         test,
@@ -234,6 +234,7 @@ class Summary():
         self.up_to_threshold = 0
         self.deprecated = 0
         self.superseded = 0
+        self.untested = 0
 
 
 def print_summary(merged, blacklist):
@@ -245,6 +246,7 @@ def print_summary(merged, blacklist):
     format_string = get_format_string()
     unused = []
     below_max = []
+    untested = []
     summary = Summary()
     for r in merged.values():
         if args.ours and not r.ours:
@@ -271,6 +273,10 @@ def print_summary(merged, blacklist):
             deprecated.append(format_algorithm_line(format_string, r))
             summary.deprecated = summary.deprecated + 1
 
+        if not r.has_test:
+            untested.append(format_algorithm_line(format_string, r))
+            summary.untested = summary.untested + 1
+
         if r.superseded is 'superseded':
             superseded.append(format_algorithm_line(format_string, r))
             summary.superseded = summary.superseded + 1
@@ -293,6 +299,12 @@ def print_summary(merged, blacklist):
     print('=== Algorithms below threshold ===')
     print_header_line(format_string)
     for line in sorted(below_max):
+        print(line)
+    print('')
+
+    print('=== Untested Algorithms ===')
+    print_header_line(format_string)
+    for line in sorted(untested):
         print(line)
     print('')
 
@@ -322,6 +334,7 @@ def print_summary(merged, blacklist):
     print('{:5} unused algorithms'.format(summary.unused))
     print('{:5} deprecated algorithms'.format(summary.deprecated))
     print('{:5} superseded algorithms'.format(summary.superseded))
+    print('{:5} untested algorithms'.format(summary.untested))
     print('')
 
     if args.ours:
