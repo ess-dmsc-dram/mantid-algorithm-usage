@@ -141,11 +141,11 @@ def merge():
     for result in results:
         merged.setdefault(result.name, AlgRecord(result.name)).add_result_data(result)
 
-    # Initialize superseeded field (replacement version found)
+    # Initialize superseded field (replacement version found)
     for item in merged.values():
         alg_version = int(item.name[:-2:-1])
-        superseeded = 'superseeded' if item.name[:-1] + str(alg_version+1) in merged else '          -'
-        item.superseeded = superseeded
+        superseded = 'superseded' if item.name[:-1] + str(alg_version+1) in merged else '          -'
+        item.superseded = superseded
 
     # Add line counts
     for item in merged.values():
@@ -197,7 +197,7 @@ def format_algorithm_line(format_string, record):
         ours,
         tested,
         test,
-        record.superseeded,
+        record.superseded,
         deprecated,
         record.name,
         record.module,
@@ -233,7 +233,7 @@ class Summary():
         self.unused = 0
         self.up_to_threshold = 0
         self.deprecated = 0
-        self.superseeded = 0
+        self.superseded = 0
 
 
 def print_summary(merged, blacklist):
@@ -241,7 +241,7 @@ def print_summary(merged, blacklist):
     line_count_unused = 0
     line_count_up_to_threshold = 0
     deprecated = []
-    superseeded = []
+    superseded = []
     format_string = get_format_string()
     unused = []
     below_max = []
@@ -271,9 +271,9 @@ def print_summary(merged, blacklist):
             deprecated.append(format_algorithm_line(format_string, r))
             summary.deprecated = summary.deprecated + 1
 
-        if r.superseeded is 'superseeded':
-            superseeded.append(format_algorithm_line(format_string, r))
-            summary.superseeded = summary.superseeded + 1
+        if r.superseded is 'superseded':
+            superseded.append(format_algorithm_line(format_string, r))
+            summary.superseded = summary.superseded + 1
 
         if count == 0:
             unused.append(format_algorithm_line(format_string, r))
@@ -302,9 +302,9 @@ def print_summary(merged, blacklist):
         print(line)
     print('')
 
-    print('=== Superseeded Algorithms (newer version available) ===')
+    print('=== Superseded Algorithms (newer version available) ===')
     print_header_line(format_string)
-    for line in sorted(superseeded):
+    for line in sorted(superseded):
         print(line)
     print('')
 
@@ -321,7 +321,7 @@ def print_summary(merged, blacklist):
         print('{:5} algorithms up to threshold use count {}'.format(summary.up_to_threshold, args.max_count))
     print('{:5} unused algorithms'.format(summary.unused))
     print('{:5} deprecated algorithms'.format(summary.deprecated))
-    print('{:5} superseeded algorithms'.format(summary.superseeded))
+    print('{:5} superseded algorithms'.format(summary.superseded))
     print('')
 
     if args.ours:
