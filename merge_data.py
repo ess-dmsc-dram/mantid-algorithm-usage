@@ -72,21 +72,24 @@ class AlgRecord:
         return 1.0 if count < 1 else float(sum(self.count_internal))/count
 
 
+def get_file_length(filename):
+    with open(filename, 'r') as myfile:
+        return len(myfile.read().strip().split('\n'))
+
+
 def get_line_count(record):
     source = record.path
     count = 0
     try:
         # Source lines
-        with open(source, 'r') as myfile:
-            count = count + len(myfile.read().split('\n'))
+        count = count + get_file_length(source)
         basename = source.split('/')[-1].split('.')[0]
         # Header lines (if applicable)
         if (record.type == 'C++') and not record.is_test:
             module = record.module.split('/')[-1]
             header = re.sub('/src/' + basename + '.cpp', '/inc/Mantid' + module + '/' + basename + '.h', source)
             try:
-                with open(header, 'r') as myfile:
-                    count = count + len(myfile.read().split('\n'))
+                count = count + get_file_length(header)
             except:
                 eprint('Failed to open header ' + header)
                 pass
@@ -95,8 +98,7 @@ def get_line_count(record):
             if record.type == 'C++':
                 testsource = re.sub('/src/' + basename + '.cpp', '/test/' + basename + 'Test.h', source)
                 try:
-                    with open(testsource, 'r') as myfile:
-                        count = count + len(myfile.read().split('\n'))
+                    count = count + get_file_length(testsource)
                     record.has_test = True
                 except:
                     eprint('Failed to open test source ' + testsource)
@@ -104,8 +106,7 @@ def get_line_count(record):
             elif record.type == 'Python':
                 testsource = source.replace('/plugins/algorithms/', '/test/python/plugins/algorithms/').replace('.py', 'Test.py').replace('/WorkflowAlgorithms', '')
                 try:
-                    with open(testsource, 'r') as myfile:
-                        count = count + len(myfile.read().split('\n'))
+                    count = count + get_file_length(testsource)
                     record.has_test = True
                 except:
                     eprint('Failed to open test source ' + testsource)
