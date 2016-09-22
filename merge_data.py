@@ -311,14 +311,14 @@ def print_summary(merged, blacklist):
     print('=== Lines of code (algorithm source files, headers, and test sources) ===')
     print('{:7} lines for all algorithms'.format(line_count))
     if args.max_count > 0:
-        print('{:7} lines for algorithms up to threashold use count {}'.format(line_count_up_to_threshold, args.max_count))
+        print('{:7} lines for algorithms up to threshold use count {}'.format(line_count_up_to_threshold, args.max_count))
     print('{:7} lines for unused algorithms'.format(line_count_unused))
     print('')
 
     print('=== Summary ===')
     print('{:5} algorithms'.format(summary.total))
     if args.max_count > 0:
-        print('{:5} algorithms up to threashold use count {}'.format(summary.up_to_threshold, args.max_count))
+        print('{:5} algorithms up to threshold use count {}'.format(summary.up_to_threshold, args.max_count))
     print('{:5} unused algorithms'.format(summary.unused))
     print('{:5} deprecated algorithms'.format(summary.deprecated))
     print('{:5} superseeded algorithms'.format(summary.superseeded))
