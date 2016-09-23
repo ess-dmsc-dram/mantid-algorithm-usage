@@ -135,6 +135,8 @@ def is_deprecated(record, deprecated_headers):
 
 
 def merge():
+    maxage = 24*60*60
+    update_cache(maxage)
     algs = parse_mantid_source.get_declared_algorithms()
     results = parse_raw_results.get_algorithm_results()
 
@@ -163,6 +165,20 @@ def merge():
         deprecated_headers = myfile.read().split('\n')
         for item in merged.values():
             item.is_deprecated = is_deprecated(item, deprecated_headers)
+
+    # Remove blacklisted items
+    for item in load_blacklist():
+        del merged[item]
+
+    # Remove unwanted items based on arguments
+    to_delete = []
+    for key, value in merged.items():
+        if args.ours and not value.ours:
+            to_delete.append(key)
+        if (not args.include_tests) and (value.is_test):
+            to_delete.append(key)
+    for item in to_delete:
+        del merged[item]
 
     # Special cases
     # Q1D2:
@@ -214,20 +230,14 @@ def format_algorithm_line(format_string, record):
         )
 
 
-def print_table(merged, blacklist):
+def print_table(merged):
     format_string = get_format_string()
     print_header_line(format_string)
 
     lines = []
     for r in merged.values():
-        if args.ours and not r.ours:
-            continue
-        if (not args.include_tests) and (r.is_test):
-            continue
         count = r.get_count()
         if args.max_count >= 0 and args.max_count < count:
-            continue
-        if (not args.include_blacklisted) and (r.name in blacklist):
             continue
 
         lines.append(format_algorithm_line(format_string, r))
@@ -246,7 +256,7 @@ class Summary():
         self.untested = 0
 
 
-def print_summary(merged, blacklist):
+def print_summary(merged):
     line_count = 0
     line_count_unused = 0
     line_count_up_to_threshold = 0
@@ -258,13 +268,6 @@ def print_summary(merged, blacklist):
     untested = []
     summary = Summary()
     for r in merged.values():
-        if args.ours and not r.ours:
-            continue
-        if (not args.include_tests) and (r.is_test):
-            continue
-        if (not args.include_blacklisted) and (r.name in blacklist):
-            continue
-
         count = r.get_count()
         try:
             this_count = int(r.line_count)
@@ -353,13 +356,9 @@ def print_summary(merged, blacklist):
 
 
 
-maxage = 24*60*60
-update_cache(maxage)
 merged = merge()
-blacklist = load_blacklist()
-
 
 if args.summary:
-    print_summary(merged, blacklist)
+    print_summary(merged)
 else:
-    print_table(merged, blacklist)
+    print_table(merged)
