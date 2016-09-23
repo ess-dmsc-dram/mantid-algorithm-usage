@@ -16,6 +16,7 @@ parser.add_argument('-c', '--max-count', metavar='N', type=int, default=-1, help
 parser.add_argument('-w', '--wide-output', action='store_true', help='Wide output, including module and path information.')
 parser.add_argument('-b', '--include-blacklisted', action='store_true', help='Include algorithms from blacklist.')
 parser.add_argument('-s', '--summary', action='store_true', help='Output summary instead of table.')
+parser.add_argument('-f', '--create-figures', action='store_true', help='Create a PDF with figures of key results.')
 
 args = parser.parse_args()
 
@@ -256,6 +257,29 @@ class Summary():
         self.untested = 0
 
 
+def get_summary(merged):
+    summary = Summary()
+    for r in merged.values():
+        summary.total = summary.total + 1
+        if r.is_deprecated:
+            summary.deprecated = summary.deprecated + 1
+
+        if not r.has_test:
+            summary.untested = summary.untested + 1
+
+        if r.superseded is 'superseded':
+            summary.superseded = summary.superseded + 1
+
+        count = r.get_count()
+        if count == 0:
+            summary.unused = summary.unused + 1
+            summary.up_to_threshold = summary.up_to_threshold + 1
+
+        if 0 < count <= args.max_count:
+            summary.up_to_threshold = summary.up_to_threshold + 1
+    return summary
+
+
 def print_summary(merged):
     line_count = 0
     line_count_unused = 0
@@ -358,7 +382,36 @@ def print_summary(merged):
 
 merged = merge()
 
-if args.summary:
+
+if args.create_figures:
+    from plot import PlotPDF
+    records = sorted(merged.values(), key=lambda k : k.get_count())
+    thresholds = [1,10,20,100, 1000, 10000, 1000000000]
+    counts = [0] * len(thresholds)
+    code = [0] * len(thresholds)
+    index = 0
+    for record in records:
+        while record.get_count() >= thresholds[index]:
+            index = index + 1
+        counts[index] = counts[index] + 1
+        if record.line_count is not '-':
+            code[index] = code[index] + int(record.line_count)
+
+    labels = ['0']
+    for i in range(len(thresholds)-2):
+        labels.append('{} to {}'.format(thresholds[i], thresholds[i+1]-1))
+    labels.append('{} or more'.format(thresholds[-2]))
+
+    with PlotPDF('charts.pdf') as p:
+        p.plot_pie(counts, labels, title='Percentage of algorithms with use-count N')
+        p.plot_pie(code, labels, title='Percentage of code in algorithms with use-count N')
+        summary = get_summary(merged)
+        labels = ['Total', 'Up to use-count {}'.format(args.max_count), 'Unused', 'Deprecated', 'Superseded', 'Untested']
+        values = [ summary.total, summary.up_to_threshold, summary.unused, summary.deprecated, summary.superseded, summary.untested ]
+        p.plot_bars(values, labels, title='Number of algorithms that are...')
+
+elif args.summary:
     print_summary(merged)
+
 else:
     print_table(merged)
