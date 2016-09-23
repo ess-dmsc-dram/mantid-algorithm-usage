@@ -7,6 +7,7 @@ import parse_raw_results
 import sys
 import config
 from update_cache import update_cache
+from termcolor import colored
 
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -188,12 +189,17 @@ def format_algorithm_line(format_string, record):
     tested = '       -' if record.has_test else 'untested'
     line_count = int(record.line_count) if record.line_count is not '-' else '    -'
     deprecated = 'deprecated' if record.is_deprecated else '         -'
+    test_fraction = '{:7.2f}'.format(record.test_fraction)
+    if record.test_fraction < 1.0:
+        test_fraction = colored('{:7.2f}'.format(record.test_fraction),'yellow')
+    if record.test_fraction < 0.5:
+        test_fraction = colored('{:7.2f}'.format(record.test_fraction),'red')
     return '  ' + format_string.format(
         count,
         int(100*record.get_internal_fraction()),
         record.type,
         line_count,
-        round(record.test_fraction, 2),
+        test_fraction,
         ours,
         tested,
         test,
