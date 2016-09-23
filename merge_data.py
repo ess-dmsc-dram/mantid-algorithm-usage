@@ -87,7 +87,7 @@ def get_test_count(filename):
         return text.count('  void test') + text.count('  def test')
 
 
-def get_line_count(record):
+def add_line_count_info(record):
     source = record.path
     count = 0
     try:
@@ -120,9 +120,9 @@ def get_line_count(record):
             except:
                 eprint('Failed to open test source ' + testsource)
                 pass
-        return str(count)
+        record.line_count = str(count)
     except IOError:
-        return '-'
+        record.line_count = '-'
 
 
 def is_deprecated(record, deprecated_headers):
@@ -157,9 +157,9 @@ def merge():
         superseded = 'superseded' if item.name[:-1] + str(alg_version+1) in merged else '          -'
         item.superseded = superseded
 
-    # Add line counts
+    # Add line counts and similar info
     for item in merged.values():
-        item.line_count = get_line_count(item)
+        add_line_count_info(item)
 
     # Add deprecation info
     with open(config.cache_dir + '/deprecated-algorithms', 'r') as myfile:
@@ -281,6 +281,7 @@ def get_summary(merged):
 
 
 def print_summary(merged):
+    summary = get_summary(merged)
     line_count = 0
     line_count_unused = 0
     line_count_up_to_threshold = 0
@@ -290,7 +291,6 @@ def print_summary(merged):
     unused = []
     below_max = []
     untested = []
-    summary = Summary()
     for r in merged.values():
         count = r.get_count()
         try:
@@ -303,28 +303,20 @@ def print_summary(merged):
         except ValueError:
             pass
 
-        summary.total = summary.total + 1
-
         if r.is_deprecated:
             deprecated.append(format_algorithm_line(format_string, r))
-            summary.deprecated = summary.deprecated + 1
 
         if not r.has_test:
             untested.append(format_algorithm_line(format_string, r))
-            summary.untested = summary.untested + 1
 
         if r.superseded is 'superseded':
             superseded.append(format_algorithm_line(format_string, r))
-            summary.superseded = summary.superseded + 1
 
         if count == 0:
             unused.append(format_algorithm_line(format_string, r))
-            summary.unused = summary.unused + 1
-            summary.up_to_threshold = summary.up_to_threshold + 1
 
         if 0 < count <= args.max_count:
             below_max.append(format_algorithm_line(format_string, r))
-            summary.up_to_threshold = summary.up_to_threshold + 1
 
     print('=== Unused Algorithms ===')
     print_header_line(format_string)
