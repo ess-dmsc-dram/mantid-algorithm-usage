@@ -201,7 +201,7 @@ def format_algorithm_line(format_string, record):
         int(100*record.get_internal_fraction()),
         record.type,
         line_count,
-        round(record.test_fraction, 2),
+        '{:7.2f}'.format(record.test_fraction),
         record.test_count,
         ours,
         tested,
