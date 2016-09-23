@@ -31,6 +31,7 @@ class AlgRecord:
         self.ours = False
         self.has_test = False
         self.test_fraction = 0.0
+        self.test_count = 0
         if isinstance(data, parse_mantid_source.AlgFileRecord):
             self.name = data.name
             self.path = data.path
@@ -79,6 +80,12 @@ def get_file_length(filename):
         return len(myfile.read().strip().split('\n'))
 
 
+def get_test_count(filename):
+    with open(filename, 'r') as myfile:
+        text = myfile.read()
+        return text.count('  void test') + text.count('  def test')
+
+
 def get_line_count(record):
     source = record.path
     count = 0
@@ -108,6 +115,7 @@ def get_line_count(record):
                 count = count + test_lines
                 record.has_test = True
                 record.test_fraction = float(test_lines)/source_lines
+                record.test_count = get_test_count(testsource)
             except:
                 eprint('Failed to open test source ' + testsource)
                 pass
@@ -172,14 +180,14 @@ def load_blacklist():
 
 
 def get_format_string():
-    format_string = '{:9} {:5}% {:6} {:5} {:7} {:8} {:8} {:6} {:11} {:10} {:40}'
+    format_string = '{:9} {:5}% {:6} {:5} {:7} {:6} {:8} {:8} {:6} {:11} {:10} {:40}'
     if args.wide_output:
         format_string = format_string + ' {} {}'
     return format_string
 
 
 def print_header_line(format_string):
-    print('# ' + format_string.format('usecount', 'child', 'type', 'lines', 'tst/src', 'codebase', 'testinfo', 'istest', 'versioninfo', 'deprecated', 'name', 'module', 'path'))
+    print('# ' + format_string.format('usecount', 'child', 'type', 'lines', 'tst/src', 'tstcnt', 'codebase', 'testinfo', 'istest', 'versioninfo', 'deprecated', 'name', 'module', 'path'))
 
 def format_algorithm_line(format_string, record):
     count = record.get_count()
