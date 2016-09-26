@@ -1,6 +1,14 @@
 # Mantid Algorithm Usage
 
+#### Overview
+
 This is a small tool for parsing and analysing algorithm usage statistics of Mantid.
+
+#### Requirements
+
+Minimum of Python 3.5 or alternatively Python 3 and Linux-like shell with `grep`, `sed`, and `cut`.
+
+#### Usage
 
 The main script is `merge_data.py`.
 It requires access to a Mantid source tree.

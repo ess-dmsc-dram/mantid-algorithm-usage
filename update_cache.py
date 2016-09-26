@@ -7,6 +7,8 @@ import os
 import stat
 import download_results
 import json
+import parse_declared_algorithms
+import sys
 
 def file_age_in_seconds(pathname):
     try:
@@ -23,7 +25,10 @@ def update_result_cache(maxage):
 def update_algorithm_cache(maxage):
     filename = config.cache_dir + '/all-algorithms'
     if file_age_in_seconds(filename) > maxage:
-        subprocess.call(['./parse_declared_algorithms.sh', config.mantid_source, config.cache_dir])
+        if sys.version_info >= (3,5):
+            parse_declared_algorithms.update_cached_algorithm_information()
+        else:
+            subprocess.call(['./parse_declared_algorithms.sh', config.mantid_source, config.cache_dir])
 
 def update_cache(maxage):
     update_result_cache(maxage)
