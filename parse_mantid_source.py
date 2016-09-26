@@ -1,6 +1,20 @@
 import re
 import config
 
+# Alternative to the shell script for parsing alg tree, but requires Python 3.5 and is slower than grep -r.
+#import glob
+def find_declared_algorithms():
+    exp = re.compile('(DECLARE_ALGORITHM|DECLARE_NEXUS_FILELOADER_ALGORITHM|DECLARE_FILELOADER_ALGORITHM|AlgorithmFactory.subscribe)\([A-Z]')
+    matches = []
+    for filetype in ['cpp', 'h', 'py']:
+        for filename in glob.iglob(config.mantid_source + '/**/*.' + filetype, recursive=True):
+            with open(filename, 'r') as myfile:
+                lines = myfile.read().strip().split('\n')
+                for line in lines:
+                    if re.search(exp, line) is not None:
+                        matches.append((filename, line.replace('()', '')))
+    return matches
+
 
 def load_declared_algorithms():
     with open(config.cache_dir + '/declared-algorithms', 'r') as myfile:
