@@ -4,7 +4,7 @@ import config
 
 
 def find_algorithms():
-    print('Sourcing Mantid source tree for algorithms')
+    print('Searching Mantid source tree for algorithms')
     exp = re.compile('(DECLARE_ALGORITHM|DECLARE_NEXUS_FILELOADER_ALGORITHM|DECLARE_FILELOADER_ALGORITHM|AlgorithmFactory.subscribe)\([A-Z]')
     exp_deprecated = re.compile('DeprecatedAlgorithm')
     declared = []
