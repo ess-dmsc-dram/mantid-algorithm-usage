@@ -111,6 +111,8 @@ def add_line_count_info(record):
                 testsource = re.sub('/src/' + basename + '.cpp', '/test/' + basename + 'Test.h', source)
             elif record.type == 'Python':
                 testsource = source.replace('/plugins/algorithms/', '/test/python/plugins/algorithms/').replace('.py', 'Test.py').replace('/WorkflowAlgorithms', '')
+            else:
+                testsource = None
             try:
                 test_lines = get_file_length(testsource)
                 count = count + test_lines
