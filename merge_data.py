@@ -113,15 +113,16 @@ def add_line_count_info(record):
                 testsource = source.replace('/plugins/algorithms/', '/test/python/plugins/algorithms/').replace('.py', 'Test.py').replace('/WorkflowAlgorithms', '')
             else:
                 testsource = None
-            try:
-                test_lines = get_file_length(testsource)
-                count = count + test_lines
-                record.has_test = True
-                record.test_fraction = float(test_lines)/source_lines
-                record.test_count = get_test_count(testsource)
-            except:
-                eprint('Failed to open test source ' + testsource)
-                pass
+            if testsource is not None:
+                try:
+                    test_lines = get_file_length(testsource)
+                    count = count + test_lines
+                    record.has_test = True
+                    record.test_fraction = float(test_lines)/source_lines
+                    record.test_count = get_test_count(testsource)
+                except:
+                    eprint('Failed to open test source ' + testsource)
+                    pass
         record.line_count = str(count)
     except IOError:
         record.line_count = '-'
