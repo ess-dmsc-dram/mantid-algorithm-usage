@@ -23,6 +23,9 @@ def update_result_cache(maxage):
             myfile.write(json.dumps(download_results.get_data()))
 
 def update_algorithm_cache(maxage):
+    if not parse_declared_algorithms.check_mantid_source_path():
+        sys.exit('ERROR: Could not find valid Mantid source.\nPlease specifify the path to a valid Mantid source tree in "config.py".\nThe current setting is {}.'.format(config.mantid_source))
+
     filename = config.cache_dir + '/declared-algorithms'
     if file_age_in_seconds(filename) > maxage:
         if sys.version_info >= (3,5):
