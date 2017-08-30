@@ -48,8 +48,8 @@ class AlgRecord:
             self.module = '-'
         else:
             raise RuntimeError('Bad init type ' + str(type(data)))
-        self.count_direct = [0,0,0,0,0]
-        self.count_internal = [0,0,0,0,0]
+        self.count_direct = [0,0,0,0,0,0,0,0]
+        self.count_internal = [0,0,0,0,0,0,0,0]
 
     def index_for_version(self, version):
         if version == '3.5':
@@ -62,6 +62,12 @@ class AlgRecord:
             return 3
         if version == '3.9':
             return 4
+        if version == '3.10':
+            return 5
+        if version == '3.11':
+            return 6
+        if version == '3.12':
+            return 7
         raise RuntimeError('Unknown version ' + version)
 
     def add_result_data(self, result):
